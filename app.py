@@ -21,6 +21,9 @@ else:
     MODEL = "gemma3:1b"
     OLLAMA_URL = "http://localhost:11434/api/generate"
 
+print("OLLAMA MODE:", "CLOUD" if OLLAMA_API_KEY else "LOCAL")
+print("OLLAMA URL:", OLLAMA_URL)
+
 BASE_DIR = Path(__file__).resolve().parent
 STORIES_DIR = BASE_DIR / "stories"
 
