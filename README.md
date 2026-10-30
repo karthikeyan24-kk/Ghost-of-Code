@@ -42,6 +42,17 @@ Ghost of Code is an AI-powered spooky story generator built using Python, Flask,
 
 7. Open http://127.0.0.1:5000 in your browser.
 
+## Screenshots
+
+### 1. Home Page
+![Home Page](screenshots/home.png)
+
+### 2. Saved Stories Library
+![Saved Stories](screenshots/library.png)
+
+### 3. Read Story
+![Read Story](screenshots/read-story.png)
+
 ## Author
 
 Karthikeyan
