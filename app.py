@@ -1,5 +1,6 @@
 
 import json
+import os
 import urllib.request
 import urllib.error
 import markdown
@@ -11,8 +12,14 @@ from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
-MODEL = "gemma3:1b"
-OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY")
+
+if OLLAMA_API_KEY:
+    MODEL = os.getenv("OLLAMA_MODEL", "gemma4:31b")
+    OLLAMA_URL = "https://ollama.com/api/generate"
+else:
+    MODEL = "gemma3:1b"
+    OLLAMA_URL = "http://localhost:11434/api/generate"
 
 BASE_DIR = Path(__file__).resolve().parent
 STORIES_DIR = BASE_DIR / "stories"
@@ -45,12 +52,17 @@ def generate_story(topic, setting, mood):
         }
     }
 
+    headers = {"Content-Type": "application/json"}
+
+    if OLLAMA_API_KEY:
+        headers["Authorization"] = f"Bearer {OLLAMA_API_KEY}"
+
     req = urllib.request.Request(
         OLLAMA_URL,
         data=json.dumps(data).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers=headers,
         method="POST"
-    )
+)
 
     try:
         with urllib.request.urlopen(req, timeout=180) as response:
