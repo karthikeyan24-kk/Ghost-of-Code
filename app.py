@@ -12,17 +12,20 @@ from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
-OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
-if OLLAMA_API_KEY:
-    MODEL = os.getenv("OLLAMA_MODEL", "gemma4:31b")
-    OLLAMA_URL = "https://ollama.com/api/generate"
-else:
-    MODEL = "gemma3:1b"
-    OLLAMA_URL = "http://localhost:11434/api/generate"
+GEMINI_URL = (
+    f"https://generativelanguage.googleapis.com/v1beta/"
+    f"models/{GEMINI_MODEL}:generateContent"
+)
 
-print("OLLAMA MODE:", "CLOUD" if OLLAMA_API_KEY else "LOCAL")
-print("OLLAMA URL:", OLLAMA_URL)
+OLLAMA_MODEL = "gemma3:1b"
+OLLAMA_URL = "http://localhost:11434/api/generate"
+
+print("AI MODE:", "GEMINI CLOUD" if GEMINI_API_KEY else "LOCAL OLLAMA")
+
+
 
 BASE_DIR = Path(__file__).resolve().parent
 STORIES_DIR = BASE_DIR / "stories"
@@ -46,8 +49,75 @@ def generate_story(topic, setting, mood):
     - Make it entertaining and spooky.
     """
 
+    # Use Gemini when the cloud API key is available
+    if GEMINI_API_KEY:
+
+        data = {
+            "contents": [
+                {
+                    "parts": [
+                        {"text": prompt}
+                    ]
+                }
+            ],
+            "generationConfig": {
+                "temperature": 0.9,
+                "maxOutputTokens": 1200
+            }
+        }
+
+        req = urllib.request.Request(
+            GEMINI_URL,
+            data=json.dumps(data).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "x-goog-api-key": GEMINI_API_KEY
+            },
+            method="POST"
+        )
+
+        try:
+            with urllib.request.urlopen(req, timeout=180) as response:
+                result = json.loads(
+                    response.read().decode("utf-8")
+                )
+
+            candidates = result.get("candidates", [])
+
+            if not candidates:
+                return "Could not generate a story: Gemini returned no response."
+
+            parts = candidates[0].get("content", {}).get("parts", [])
+
+            story = "\n".join(
+                part.get("text", "")
+                for part in parts
+                if part.get("text")
+            ).strip()
+
+            return story or "Could not generate a story: Gemini returned empty text."
+
+        except urllib.error.HTTPError as error:
+            details = error.read().decode("utf-8", errors="replace")
+
+            try:
+                details = json.loads(details).get(
+                    "error", {}
+                ).get("message", error.reason)
+            except json.JSONDecodeError:
+                details = error.reason
+
+            return f"Could not use Gemini API (HTTP {error.code}): {details}"
+
+        except urllib.error.URLError as error:
+            return f"Could not connect to Gemini: {error.reason}"
+
+        except (TimeoutError, json.JSONDecodeError) as error:
+            return f"Could not generate the story: {error}"
+
+    # Otherwise use local Ollama
     data = {
-        "model": MODEL,
+        "model": OLLAMA_MODEL,
         "prompt": prompt,
         "stream": False,
         "options": {
@@ -55,17 +125,12 @@ def generate_story(topic, setting, mood):
         }
     }
 
-    headers = {"Content-Type": "application/json"}
-
-    if OLLAMA_API_KEY:
-        headers["Authorization"] = f"Bearer {OLLAMA_API_KEY}"
-
     req = urllib.request.Request(
         OLLAMA_URL,
         data=json.dumps(data).encode("utf-8"),
-        headers=headers,
+        headers={"Content-Type": "application/json"},
         method="POST"
-)
+    )
 
     try:
         with urllib.request.urlopen(req, timeout=180) as response:
@@ -77,10 +142,11 @@ def generate_story(topic, setting, mood):
         return f"Ollama error: {error.code} {error.reason}"
 
     except urllib.error.URLError as error:
-        return f"Could not connect to Ollama: {error.reason}"
+        return f"Could not connect to local Ollama: {error.reason}"
 
     except (TimeoutError, json.JSONDecodeError) as error:
         return f"Could not generate the story: {error}"
+
 
 
 def save_story(topic, setting, mood, story):
