@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Ghost of Code | AI Story Generator</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+</head>
+
+<body>
+
+    <header class="navbar">
+        <div class="logo">👻 Ghost of Code</div>
+        <span class="status">● LOCAL AI ONLINE</span>
+    </header>
+
+    <main class="container">
+
+        <section class="hero">
+            <p class="small-heading">WELCOME TO THE UNKNOWN</p>
+
+            <h1>
+                Every line of code<br>
+                has a <span>ghost story.</span>
+            </h1>
+
+            <p class="description">
+                Enter your imagination. Let our local AI bring
+                your darkest computer stories to life.
+            </p>
+        </section>
+
+        <section class="generator">
+
+            <h2>Summon Your Story</h2>
+
+            <form method="POST" id="storyForm">
+
+                <label for="topic">Story Topic</label>
+                <input type="text" id="topic" name="topic" placeholder="Example: A mysterious Python program"
+                    value="{{ topic }}" maxlength="100" required>
+
+                <label for="setting">Story Setting</label>
+                <input type="text" id="setting" name="setting" placeholder="Example: An abandoned computer lab"
+                    value="{{ setting }}" maxlength="150" required>
+
+                <label for="mood">Choose Your Mood</label>
+
+                <select id="mood" name="mood" required>
+                    <option value="">Select a mood</option>
+
+                    <option value="Scary" {% if mood=="Scary" %}selected{% endif %}>
+                        Very Scary
+                    </option>
+
+                    <option value="Mysterious" {% if mood=="Mysterious" %}selected{% endif %}>
+                        Mysterious
+                    </option>
+
+                    <option value="Dark" {% if mood=="Dark" %}selected{% endif %}>
+                        Dark
+                    </option>
+
+                    <option value="Suspenseful" {% if mood=="Suspenseful" %}selected{% endif %}>
+                        Suspenseful
+                    </option>
+                </select>
+
+                <button type="submit" id="generateBtn">
+                    👻 Generate My Story
+                </button>
+
+            </form>
+
+            <div class="loading" id="loading">
+                The ghost is writing your story...
+            </div>
+
+            {% if error %}
+            <div class="error">
+                {{ error }}
+            </div>
+            {% endif %}
+
+        </section>
+
+        {% if story %}
+
+        <section class="story-result">
+
+            <h2>📜 Your Ghost Story</h2>
+
+            <div class="story-content">{{ story_html | safe }}</div>
+            <p class="saved-message">
+                ✓ Your story has been saved locally.
+            </p>
+
+        </section>
+
+        {% endif %}
+
+    </main>
+
+    <footer>
+        <p>Powered by Gemma 3 1B · Ollama · Local AI</p>
+        <p>Created for Hacktoberfest 2026 — Ghost in the Machine</p>
+    </footer>
+
+</body>
+
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saved Stories | Ghost of Code</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111827;
+            color: white;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .story-card {
+            background: #1f2937;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 12px;
+        }
+
+        .story-date {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+
+        button {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 9px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .read-button {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 9px 15px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <a href="/">← Back to Home</a>
+
+        <h1>👻 Saved Stories Library</h1>
+        <p>Your previously generated stories.</p>
+
+        <input type="text" id="searchInput" placeholder="Search your stories..." onkeyup="searchStories()"
+            style="padding: 12px; width: 90%; max-width: 400px; border-radius: 8px;">
+
+        {% if stories %}
+
+        {% for story in stories %}
+
+        <div class="story-card" data-search="{{ (story.title ~ ' ' ~ story.filename) | lower }}"></div>
+
+        <h2>{{ story.title }}</h2>
+
+        <p class="story-date">
+            Saved: {{ story.date }}
+        </p>
+
+        <a class="read-button" href="{{ url_for('read_story', filename=story.filename) }}">
+            Read Story
+        </a>
+
+        <form action="{{ url_for('delete_story', filename=story.filename) }}" method="POST" style="display:inline;"
+            onsubmit="return confirm('Delete this story?');">
+
+            <button type="submit">Delete</button>
+
+        </form>
+
+    </div>
+
+    {% endfor %}
+
+    {% else %}
+
+    <p>No saved stories found.</p>
+
+    {% endif %}
+
+    </div>
+    <script>
+        function searchStories() {
+            const input = document.getElementById("searchInput");
+            const filter = input.value.toLowerCase();
+
+            const cards = document.querySelectorAll(".story-card");
+
+            cards.forEach(card => {
+                const searchText = card.dataset.search;
+
+                card.style.display =
+                    searchText.includes(filter) ? "" : "none";
+            });
+        }
+    </script>
+</body>
+
+</html>
